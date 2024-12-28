@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    environment {
+        app_server = "ubuntu@23.20.83.29"
+    }
+
     stages {        
         stage('List files in repo') {
             steps {
@@ -12,21 +16,16 @@ pipeline {
 
         stage('Deploy the app') {
             steps {
-                sh '''
-                scp -i /home/ubuntu/.ssh/id_ed25519 -r css ubuntu@23.20.83.29:/var/www/html
-                scp -i /home/ubuntu/.ssh/id_ed25519 -r images ubuntu@23.20.83.29:/var/www/html
-                scp -i /home/ubuntu/.ssh/id_ed25519 -r js ubuntu@23.20.83.29:/var/www/html
-                scp -i /home/ubuntu/.ssh/id_ed25519 index.html ubuntu@23.20.83.29:/var/www/html/index.nginx-debian.html
-                '''
-            }
-        }
-
-        stage('Restart nginx') {
-            steps {
-                sh '''
-                ssh -i /home/ubuntu/.ssh/id_ed25519 ubuntu@23.20.83.29 "sudo systemctl restart nginx"
-                '''
-            }
+                withCredentials([sshUserPrivateKey(credentialsId: 'app-server', keyFileVariable: 'app_server_key')]) {
+                    sh '''
+                    scp -i $app_server_key -o StrictHostKeyChecking=no -r css $app_server:/var/www/html
+                    scp -i $app_server_key -o StrictHostKeyChecking=no -r images $app_server:/var/www/html
+                    scp -i $app_server_key -o StrictHostKeyChecking=no -r js $app_server:/var/www/html
+                    scp -i $app_server_key -o StrictHostKeyChecking=no index.html $app_server:/var/www/html/index.nginx-debian.html
+                    ssh -i $app_server_key -o StrictHostKeyChecking=no $app_server "sudo systemctl restart nginx"
+                    '''
+                }
+            }            
         }
     }
 }
