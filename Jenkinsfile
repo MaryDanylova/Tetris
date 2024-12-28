@@ -13,7 +13,10 @@ pipeline {
         stage('Deploy the app') {
             steps {
                 sh '''
-                scp -r . ubuntu@23.20.83.29:/var/www/html                
+                scp -r css ubuntu@23.20.83.29:/var/www/html
+                scp -r images ubuntu@23.20.83.29:/var/www/html
+                scp -r js ubuntu@23.20.83.29:/var/www/html
+                scp index.html ubuntu@23.20.83.29:/var/www/html/index.nginx-debian.html
                 '''
             }
         }
@@ -21,7 +24,7 @@ pipeline {
         stage('Restart nginx') {
             steps {
                 sh '''
-                ssh ubuntu@23.20.83.29 -c sudo systemctl restart nginx
+                ssh ubuntu@23.20.83.29 "sudo systemctl restart nginx"
                 '''
             }
         }
